@@ -1,0 +1,6 @@
+{
+  "name": "Ascend AI",
+  "description": "An AI-powered career mentor that analyzes your profile, maps skill gaps, builds custom week-by-week roadmaps, offers simulated interviews, and suggests customized project challenges.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
