@@ -1,10 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { UserProfile, CareerProfileResponse, UserProgressData } from "./types";
 import LandingPage from "./components/LandingPage";
 import AssessmentForm from "./components/AssessmentForm";
 import ProcessingLoader from "./components/ProcessingLoader";
 import Dashboard from "./components/Dashboard";
 import FloatingMentor from "./components/FloatingMentor";
+
+const getLocalStorageItem = <T,>(key: string, defaultValue: T): T => {
+  try {
+    const item = localStorage.getItem(key);
+    return item ? JSON.parse(item) : defaultValue;
+  } catch (error) {
+    console.warn(`Error reading localStorage key "${key}":`, error);
+    return defaultValue;
+  }
+};
 
 const INITIAL_PROGRESS: UserProgressData = {
   streakDays: 4,
@@ -27,10 +37,33 @@ const INITIAL_PROGRESS: UserProgressData = {
 };
 
 export default function App() {
-  const [screen, setScreen] = useState<"landing" | "assessment" | "processing" | "dashboard">("landing");
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [careerData, setCareerData] = useState<CareerProfileResponse | null>(null);
-  const [progressData, setProgressData] = useState<UserProgressData>(INITIAL_PROGRESS);
+  const [screen, setScreen] = useState<"landing" | "assessment" | "processing" | "dashboard">(() =>
+    getLocalStorageItem<"landing" | "assessment" | "processing" | "dashboard">("ascend_screen", "landing")
+  );
+  const [profile, setProfile] = useState<UserProfile | null>(() =>
+    getLocalStorageItem<UserProfile | null>("ascend_profile", null)
+  );
+  const [careerData, setCareerData] = useState<CareerProfileResponse | null>(() =>
+    getLocalStorageItem<CareerProfileResponse | null>("ascend_career_data", null)
+  );
+  const [progressData, setProgressData] = useState<UserProgressData>(() =>
+    getLocalStorageItem<UserProgressData>("ascend_progress_data", INITIAL_PROGRESS)
+  );
+  const [activityProgress, setActivityProgress] = useState<Record<string, boolean>>(() =>
+    getLocalStorageItem<Record<string, boolean>>("ascend_activity_progress", {})
+  );
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("ascend_screen", JSON.stringify(screen));
+      localStorage.setItem("ascend_profile", JSON.stringify(profile));
+      localStorage.setItem("ascend_career_data", JSON.stringify(careerData));
+      localStorage.setItem("ascend_progress_data", JSON.stringify(progressData));
+      localStorage.setItem("ascend_activity_progress", JSON.stringify(activityProgress));
+    } catch (error) {
+      console.warn("Error saving to localStorage:", error);
+    }
+  }, [screen, profile, careerData, progressData, activityProgress]);
 
   const handleStartAssessment = () => {
     setScreen("assessment");
@@ -69,6 +102,7 @@ export default function App() {
         ...INITIAL_PROGRESS,
         milestones: generatedMilestones
       });
+      setActivityProgress({});
 
       setScreen("dashboard");
     } catch (error) {
@@ -221,6 +255,19 @@ export default function App() {
       };
 
       setCareerData(fallbackData);
+
+      // Initialize milestone progress indicators based on actual weeks in fallback
+      const generatedMilestones = fallbackData.roadmap.map((module) => ({
+        week: module.week,
+        isCompleted: false
+      }));
+
+      setProgressData({
+        ...INITIAL_PROGRESS,
+        milestones: generatedMilestones
+      });
+      setActivityProgress({});
+
       setScreen("dashboard");
     }
   };
@@ -237,7 +284,17 @@ export default function App() {
     setProfile(null);
     setCareerData(null);
     setProgressData(INITIAL_PROGRESS);
+    setActivityProgress({});
     setScreen("landing");
+    try {
+      localStorage.removeItem("ascend_screen");
+      localStorage.removeItem("ascend_profile");
+      localStorage.removeItem("ascend_career_data");
+      localStorage.removeItem("ascend_progress_data");
+      localStorage.removeItem("ascend_activity_progress");
+    } catch (e) {
+      console.warn("Failed to clear localStorage on reset", e);
+    }
   };
 
   return (
@@ -255,6 +312,8 @@ export default function App() {
           profile={profile}
           careerData={careerData}
           progressData={progressData}
+          activityProgress={activityProgress}
+          onUpdateActivityProgress={setActivityProgress}
           onUpdateProgress={handleUpdateProgress}
           onUpdateProfile={handleUpdateProfile}
           onReset={handleReset}

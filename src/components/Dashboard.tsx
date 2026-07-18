@@ -27,6 +27,8 @@ interface DashboardProps {
   profile: UserProfile;
   careerData: CareerProfileResponse;
   progressData: UserProgressData;
+  activityProgress: Record<string, boolean>;
+  onUpdateActivityProgress: (progress: Record<string, boolean>) => void;
   onUpdateProgress: (updatedProgress: UserProgressData) => void;
   onUpdateProfile: (updatedProfile: UserProfile) => void;
   onReset: () => void;
@@ -36,12 +38,13 @@ export default function Dashboard({
   profile,
   careerData,
   progressData,
+  activityProgress,
+  onUpdateActivityProgress,
   onUpdateProgress,
   onUpdateProfile,
   onReset
 }: DashboardProps) {
   const [activeTab, setActiveTab] = useState<string>("roadmap");
-  const [activityProgress, setActivityProgress] = useState<Record<string, boolean>>({});
 
   const handleToggleActivity = (weekNumber: number, activityIdx: number) => {
     const key = `${weekNumber}-${activityIdx}`;
@@ -49,7 +52,7 @@ export default function Dashboard({
     const nextChecked = !wasChecked;
 
     const nextActivityProgress = { ...activityProgress, [key]: nextChecked };
-    setActivityProgress(nextActivityProgress);
+    onUpdateActivityProgress(nextActivityProgress);
 
     // Calculate XP reward: +50 XP per completed activity!
     const xpChange = nextChecked ? 50 : -50;
