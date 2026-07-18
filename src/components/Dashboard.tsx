@@ -6,6 +6,7 @@ import ProjectsHub from "./ProjectsHub";
 import InterviewEngine from "./InterviewEngine";
 import ComparisonScreen from "./ComparisonScreen";
 import ProgressScreen from "./ProgressScreen";
+import XPProgressionChart from "./XPProgressionChart";
 import {
   BrainCircuit,
   GraduationCap,
@@ -347,46 +348,55 @@ export default function Dashboard({
             </p>
           </div>
 
-          {/* Sizable Stats grid */}
-          <div className="md:col-span-8 grid sm:grid-cols-3 gap-6">
-            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-5 flex flex-col justify-between">
-              <div className="p-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] rounded-xl w-fit">
-                <Award className="w-5 h-5" />
+          {/* Sizable Stats grid & XP Progression Line Chart */}
+          <div className="md:col-span-8 flex flex-col gap-6">
+            <div className="grid sm:grid-cols-3 gap-6">
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-5 flex flex-col justify-between">
+                <div className="p-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] rounded-xl w-fit">
+                  <Award className="w-5 h-5" />
+                </div>
+                <div className="mt-4">
+                  <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Skills Matched</span>
+                  <h4 className="text-2xl font-light font-serif text-[#D4AF37] mt-1">
+                    {careerData.skillsMatched.length} Verified
+                  </h4>
+                  <p className="text-[10px] text-white/40 mt-1 italic font-serif">Foundational concepts matching expectations</p>
+                </div>
               </div>
-              <div className="mt-4">
-                <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Skills Matched</span>
-                <h4 className="text-2xl font-light font-serif text-[#D4AF37] mt-1">
-                  {careerData.skillsMatched.length} Verified
-                </h4>
-                <p className="text-[10px] text-white/40 mt-1 italic font-serif">Foundational concepts matching expectations</p>
+
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-5 flex flex-col justify-between">
+                <div className="p-2 bg-rose-950/20 border border-rose-800/30 text-rose-400 rounded-xl w-fit">
+                  <Zap className="w-5 h-5" />
+                </div>
+                <div className="mt-4">
+                  <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Missing Skills Gaps</span>
+                  <h4 className="text-2xl font-light font-serif text-white mt-1">
+                    {careerData.missingSkills.length} Identified
+                  </h4>
+                  <p className="text-[10px] text-white/40 mt-1 italic font-serif">Benchmarks you need to develop</p>
+                </div>
+              </div>
+
+              <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-5 flex flex-col justify-between">
+                <div className="p-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] rounded-xl w-fit">
+                  <BookOpen className="w-5 h-5" />
+                </div>
+                <div className="mt-4">
+                  <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Est. Learning Time</span>
+                  <h4 className="text-2xl font-light font-serif text-[#D4AF37] mt-1">
+                    ~{careerData.estLearningHours} Hours
+                  </h4>
+                  <p className="text-[10px] text-white/40 mt-1 italic font-serif">To close critical gaps completely</p>
+                </div>
               </div>
             </div>
 
-            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-5 flex flex-col justify-between">
-              <div className="p-2 bg-rose-950/20 border border-rose-800/30 text-rose-400 rounded-xl w-fit">
-                <Zap className="w-5 h-5" />
-              </div>
-              <div className="mt-4">
-                <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Missing Skills Gaps</span>
-                <h4 className="text-2xl font-light font-serif text-white mt-1">
-                  {careerData.missingSkills.length} Identified
-                </h4>
-                <p className="text-[10px] text-white/40 mt-1 italic font-serif">Benchmarks you need to develop</p>
-              </div>
-            </div>
-
-            <div className="bg-white/[0.03] border border-white/10 rounded-3xl p-5 flex flex-col justify-between">
-              <div className="p-2 bg-[#D4AF37]/10 border border-[#D4AF37]/20 text-[#D4AF37] rounded-xl w-fit">
-                <BookOpen className="w-5 h-5" />
-              </div>
-              <div className="mt-4">
-                <span className="text-[9px] text-white/40 font-bold uppercase tracking-widest">Est. Learning Time</span>
-                <h4 className="text-2xl font-light font-serif text-[#D4AF37] mt-1">
-                  ~{careerData.estLearningHours} Hours
-                </h4>
-                <p className="text-[10px] text-white/40 mt-1 italic font-serif">To close critical gaps completely</p>
-              </div>
-            </div>
+            {/* D3.js Weekly XP & Milestone Progression Chart */}
+            <XPProgressionChart
+              roadmap={careerData.roadmap}
+              progressData={progressData}
+              activityProgress={activityProgress}
+            />
           </div>
         </div>
 

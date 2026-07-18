@@ -21,16 +21,93 @@ const ai = new GoogleGenAI({
   }
 });
 
+// Helper function to handle transient Gemini API errors (e.g., 503 Service Unavailable, 429 Rate Limits)
+// with exponential backoff retries and an automatic fallback to gemini-3.1-flash-lite if the primary model fails.
+async function generateContentWithFallback(params: any) {
+  const primaryModel = params.model || "gemini-3.5-flash";
+  const fallbackModel = primaryModel === "gemini-3.5-flash" ? "gemini-3.1-flash-lite" : null;
+
+  const tryModel = async (modelName: string, retries = 3, baseDelay = 1000) => {
+    let attempt = 0;
+    while (attempt < retries) {
+      try {
+        const modelParams = { ...params, model: modelName };
+        return await ai.models.generateContent(modelParams);
+      } catch (error: any) {
+        attempt++;
+        console.warn(`Gemini API attempt ${attempt}/${retries} failed for model ${modelName}:`, error);
+        
+        const errorText = error.message || "";
+        const status = error.status || (error.error?.code) || 0;
+        const isTransient = 
+          status === 503 || 
+          status === 429 || 
+          errorText.includes("503") || 
+          errorText.includes("429") || 
+          errorText.includes("UNAVAILABLE") || 
+          errorText.includes("high demand") || 
+          errorText.includes("Rate limit");
+          
+        if (isTransient && attempt < retries) {
+          const delay = baseDelay * Math.pow(2, attempt - 1);
+          console.log(`Retrying model ${modelName} in ${delay}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+        } else {
+          throw error;
+        }
+      }
+    }
+    throw new Error(`Failed to generate content with ${modelName} after ${retries} retries`);
+  };
+
+  try {
+    return await tryModel(primaryModel);
+  } catch (primaryError) {
+    console.error(`Primary model ${primaryModel} failed permanently.`, primaryError);
+    if (fallbackModel) {
+      console.log(`Attempting fallback to ${fallbackModel}...`);
+      try {
+        return await tryModel(fallbackModel);
+      } catch (fallbackError) {
+        console.error(`Fallback model ${fallbackModel} also failed.`, fallbackError);
+        throw primaryError; // Throw original primary error to maintain descriptive context
+      }
+    }
+    throw primaryError;
+  }
+}
+
 // API Routes
 // Endpoint 1: Generate Career Profile, Roadmap, Skills Mapping, Projects, and Questions
 app.post("/api/generate-roadmap", async (req, res) => {
   try {
     const { name, targetRole, experienceLevel, skillsText, resumeText, weeklyCommitment, confidenceLevel, localizationLanguage } = req.body;
 
-    const systemPrompt = `You are an elite career mentor and technical skill assessor. 
-Analyze the user profile for the target role "${targetRole}" with experience level "${experienceLevel}".
-Determine their skills profile: extract matched skills (comparing what they provided to industry expectations for the role), identify crucial missing skills/skill gaps, estimate realistic learning hours, and design a customized week-by-week learning roadmap (minimum 4 weeks) fitting their weekly commitment of ${weeklyCommitment} hours.
-Also, design 3 customized, highly practical project challenges mapped to their skill gaps, and 3 interview preparation questions complete with sample answers and tips.
+    const systemPrompt = `You are an elite technical career mentor and senior engineering architect.
+Your mission is to generate an incredibly detailed, highly realistic, and actionable technical career roadmap, skills mapping, and project curriculum for the target role "${targetRole}" at experience level "${experienceLevel}".
+
+CRITICAL REQUIREMENTS FOR THE ROADMAP & SKILLS:
+1. **No Vague Boilerplate or Generic Topics**: Vague terms like "Learn JS" or "Understand basics" are strictly forbidden. Be extremely specific with technologies, libraries, concepts, and design patterns.
+   - For example, if it's Frontend Development, use precise topics like: "Master React 19 Concurrent rendering, Server Actions, Server Components, Hydration bottlenecks, Tailwind CSS v4 custom theme directives, and Vite bundle optimization with rollup-plugin-visualizer."
+   - If it's VR Developer, Augmented Reality, or graphics programming, specify: "Configure WebXR device controllers, design three.js PerspectiveCameras and WebGLRenderers, master rendering pipelines, handle quaternions and Euler angles for 3D rotations, and program custom GLSL shaders (vertex and fragment)."
+2. **Difficulty-Aware and Role-Aware Timelines**:
+   - The complexity, depth, and duration of the roadmap must match the true real-world difficulty of the role.
+   - High-difficulty specialties (e.g., VR Developer, Systems Engineer, AI Core Researcher, Cloud Architect) are hard to learn and require deep mathematical, low-level, or graphics foundations, and specific toolsets (e.g., Unity Learn, C#, Unreal Engine C++, OpenXR, WebXR Device API, Three.js, Blender). Design an intensive, high-fidelity, comprehensive weeks list mapping these advanced paradigms.
+   - Moderate/Easy specialties (e.g., junior Web Developer, modern Frontend Developer) should be structured as highly streamlined, modern, production-grade paths (typically 4 weeks) focusing on immediate, practical full-stack deployment patterns (React, Vite, Tailwind CSS v4, state engines, and cloud hostings).
+3. **Genuine, Click-Ready, Referenceable Resources**:
+   - Do NOT output placeholder or generic domain-only URLs. Every resource URL must be a real, authentic, click-ready learning link to documentation or tutorials.
+   - Choose authentic, specific URL paths from domains like:
+     - React Docs: "https://react.dev/reference/react" or specific guides.
+     - MDN Web Docs: "https://developer.mozilla.org/en-US/docs/Web/API" (e.g. WebXR Device API)
+     - Three.js Docs: "https://threejs.org/docs/"
+     - Unity Learn: "https://learn.unity.com/"
+     - Unreal Engine Docs: "https://docs.unrealengine.com/"
+     - Web.dev: "https://web.dev/"
+     - Vite Guide: "https://vite.dev/guide/"
+     - Tailwind CSS Docs: "https://tailwindcss.com/docs/"
+     - Google C++ Style Guide or standard learncpp.com links.
+4. **Concrete Hands-on Activities**:
+   - Every activity must be a concrete, real task. Instead of "Write a program", say "Write a custom GLSL fragment shader that simulates dynamic water ripples on a plane geometry in Three.js." or "Build a debounce hook in TypeScript to throttle rapid search query updates to a mock REST endpoint."
 
 CRITICAL: Translate all text outputs, descriptions, titles, tips, objectives, and questions into the requested language: "${localizationLanguage || "English"}".
 Format all outputs in structured JSON matching the requested response schema exactly.`;
@@ -43,7 +120,7 @@ Resume/Background Details: ${resumeText}
 Weekly Commitment: ${weeklyCommitment} hours/week
 Confidence Level: ${confidenceLevel}/10`;
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback({
       model: "gemini-3.5-flash",
       contents: [
         { text: systemPrompt },
@@ -193,7 +270,7 @@ Identify:
 CRITICAL: Translate all outputs, titles, explanations, and advice into the requested language: "${localizationLanguage || "English"}".
 Return the output strictly in the requested JSON structure.`;
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback({
       model: "gemini-3.5-flash",
       contents: [{ text: systemPrompt }],
       config: {
@@ -239,7 +316,7 @@ Specifically, return a JSON object with:
 - improvements: bullet-point advice on how to improve.
 - followUpQuestion: a dynamic, conversational follow-up question digging deeper into their stated answer.`;
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback({
       model: "gemini-3.5-flash",
       contents: [
         { text: systemPrompt },
@@ -301,7 +378,7 @@ Analyze the conversation logs and respond directly to their last query.`;
 
     contents.push({ text: `User: ${userMessage}` });
 
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithFallback({
       model: "gemini-3.5-flash",
       contents,
     });
