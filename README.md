@@ -6,6 +6,40 @@ Skill Ascend is an elite technical career mentorship and skills assessment platf
 
 ---
 
+## 📸 Interface & Features Showcase
+
+To visualize the platform's layout and core systems, review the step-by-step app screenshots below:
+
+### 1. Welcome & Landing Hub
+*The entry portal where users begin their targeted career alignment journey.*
+![Welcome Landing Screen](screenshots/landing.png)
+
+### 2. Industry Assessment Form
+*Ingests candidate skills, target role expectations, confidence level, and weekly commitment.*
+![Career Assessment Form](screenshots/assessment.png)
+
+### 3. D3.js Weekly XP & Milestone Progression
+*An interactive, custom-styled D3.js line chart animating XP levels and checklist completions.*
+![D3.js Progression Chart](screenshots/d3_chart.png)
+
+### 4. Interactive Week-by-Week Syllabus
+*Structured, specific study weeks populated with authentic external documentation reference links.*
+![Weekly Roadmap Syllabus](screenshots/weekly_roadmap.png)
+
+### 5. Tailored Projects Hub
+*Custom production-level project blueprints engineered specifically to bridge found skill gaps.*
+![Project Hub Showcase](screenshots/projects_hub.png)
+
+### 6. Interactive Mock Interview Engine
+*Role-specific situational questions with fully responsive user answers and senior mentor evaluations.*
+![Interview Engine Simulation](screenshots/interview_mock.png)
+
+### 7. Conversational AI Career Mentor
+*Floating interactive consultant widget assisting users with on-demand skill gap explanations.*
+![Conversational AI Mentor](screenshots/floating_mentor.png)
+
+---
+
 ## 🌟 Core Features
 
 ### 1. Adaptive AI Mentor & Curriculum Engine
