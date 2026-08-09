@@ -2,7 +2,10 @@
 
 Skill Ascend is an elite technical career mentorship and skills assessment platform. It generates tailored, highly realistic, and actionable technical learning roadmaps, hand-crafted projects, and interactive interview mock questions matching real-world industry benchmarks.
 
-**Live Deployed Link:** [https://skill-ascend-rahb.onrender.com/#how-it-works](https://skill-ascend-rahb.onrender.com/#how-it-works)
+**Live Deployed Link:** **Live Deployed Link:** [https://skill-ascend-zs5m.onrender.com](https://skill-ascend-zs5m.onrender.com)
+
+
+**GitHub Repository:** [https://github.com/Dinesh-05-G/Skill-Ascend](https://github.com/Dinesh-05-G/Skill-Ascend)
 
 ---
 
